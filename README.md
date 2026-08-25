@@ -2,6 +2,8 @@
 
 単語・熟語を登録して「カードめくり」と「クイズ」で学習できる、スマホ向け英語学習 PWA。
 
+**公開URL: https://ko-dai0525.github.io/my-study-english-app/**
+
 - 計画: [PLAN.md](PLAN.md)
 - 仕様書: [docs/SPEC.md](docs/SPEC.md)
 
@@ -31,11 +33,14 @@ npm run preview &
 node scripts/smoke.mjs
 ```
 
+## デプロイ（CD）
+
+`main` ブランチに push すると GitHub Actions（[.github/workflows/deploy.yml](.github/workflows/deploy.yml)）が自動でビルドして GitHub Pages に公開する。手動実行は Actions タブの workflow_dispatch から。
+
 ## スマホで使うには
 
-1. `dist/` を HTTPS の静的ホスティングに置く（GitHub Pages / Cloudflare Pages / Netlify など、無料枠でOK）
-2. スマホのブラウザで開く
-3. 「ホーム画面に追加」する（iOS: 共有 → ホーム画面に追加 / Android: メニュー → アプリをインストール）
-4. 以降はオフラインでも起動・学習できる
+1. スマホのブラウザで https://ko-dai0525.github.io/my-study-english-app/ を開く
+2. 「ホーム画面に追加」する（iOS: 共有 → ホーム画面に追加 / Android: メニュー → アプリをインストール）
+3. 以降はオフラインでも起動・学習できる
 
 ※ 学習データは端末内（localStorage）にのみ保存される。定期的にエクスポートしてバックアップ推奨。

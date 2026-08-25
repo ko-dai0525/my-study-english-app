@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 npm run dev             # 開発サーバー（Vite）
 npm run build           # 型チェック（tsc -b）+ 本番ビルド → dist/
-npm run preview         # ビルド結果を localhost:4173 で配信
+npm run preview         # ビルド結果を localhost:4173/my-study-english-app/ で配信
 npm run generate-icons  # public/icons/icon.svg から PNG アイコンを再生成
 ```
 
@@ -22,6 +22,10 @@ npm run build
 npm run preview &
 node scripts/smoke.mjs   # Playwright で3タブの主要フローを検証、/tmp/smoke-shots にスクショ保存
 ```
+
+## デプロイ
+
+main への push で GitHub Actions（.github/workflows/deploy.yml）が GitHub Pages（https://ko-dai0525.github.io/my-study-english-app/）へ自動デプロイする。vite.config.ts の `base` はこのパス前提。
 
 ## ドキュメント同期（重要）
 

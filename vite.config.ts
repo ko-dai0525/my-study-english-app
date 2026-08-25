@@ -3,6 +3,8 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
+  // GitHub Pages（https://ko-dai0525.github.io/my-study-english-app/）配下で配信するため
+  base: '/my-study-english-app/',
   plugins: [
     react(),
     VitePWA({

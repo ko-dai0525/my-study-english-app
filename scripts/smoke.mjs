@@ -10,7 +10,7 @@ page.on('console', (msg) => {
 })
 page.on('pageerror', (err) => errors.push(String(err)))
 
-await page.goto('http://localhost:4173')
+await page.goto('http://localhost:4173/my-study-english-app/')
 
 // 一覧タブ: 単語を2件登録
 for (const [term, meaning, example] of [
