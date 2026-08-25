@@ -1,0 +1,492 @@
+:root {
+  --primary: #4f46e5;
+  --primary-dark: #4338ca;
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --text: #1e293b;
+  --text-sub: #64748b;
+  --border: #e2e8f0;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Noto Sans JP',
+    sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.app-header {
+  padding: calc(env(safe-area-inset-top) + 14px) 16px 12px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 0 0 var(--radius) var(--radius);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.app-main {
+  flex: 1;
+  padding: 16px 16px calc(env(safe-area-inset-bottom) + 90px);
+}
+
+/* ---- 共通 ---- */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+button {
+  font: inherit;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+button.primary:active {
+  background: var(--primary-dark);
+}
+
+button.danger {
+  color: var(--danger);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.icon-button {
+  border: none;
+  background: none;
+  padding: 4px 6px;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+input,
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+input:focus,
+textarea:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: -1px;
+}
+
+textarea {
+  resize: vertical;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+.empty {
+  text-align: center;
+  color: var(--text-sub);
+  padding: 40px 16px;
+  line-height: 1.7;
+}
+
+.note {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  line-height: 1.6;
+}
+
+/* ---- 一覧タブ ---- */
+
+.list-header {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.word-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.word-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.word-main {
+  min-width: 0;
+}
+
+.word-term-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.word-term {
+  font-weight: 700;
+  font-size: 1.05rem;
+  overflow-wrap: anywhere;
+}
+
+.word-meaning {
+  margin-top: 2px;
+  overflow-wrap: anywhere;
+}
+
+.word-example {
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  font-style: italic;
+  overflow-wrap: anywhere;
+}
+
+.word-stats {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+
+.word-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.word-actions button {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* ---- 出題方向トグル ---- */
+
+.direction-toggle {
+  display: flex;
+  background: #e2e8f0;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.direction-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 9px 8px;
+  font-size: 0.9rem;
+  border-radius: 9px;
+  color: var(--text-sub);
+}
+
+.direction-toggle button.active {
+  background: var(--surface);
+  color: var(--primary);
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.12);
+}
+
+/* ---- カードタブ ---- */
+
+.card-progress {
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 0.9rem;
+}
+
+.flip-card {
+  border: none;
+  background: none;
+  padding: 0;
+  perspective: 1200px;
+  height: 320px;
+  width: 100%;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.5s;
+  transform-style: preserve-3d;
+}
+
+.flip-card.flipped .flip-card-inner {
+  transform: rotateY(180deg);
+}
+
+.flip-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  box-shadow: 0 6px 20px rgb(79 70 229 / 0.12);
+}
+
+.flip-face.back {
+  transform: rotateY(180deg);
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.flip-text {
+  font-size: 1.6rem;
+  font-weight: 700;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.flip-hint {
+  position: absolute;
+  bottom: 14px;
+  font-size: 0.75rem;
+  color: var(--text-sub);
+}
+
+.flip-example {
+  font-size: 0.9rem;
+  opacity: 0.9;
+  font-style: italic;
+  text-align: center;
+}
+
+.flip-face .speak-button {
+  font-size: 1.6rem;
+}
+
+.card-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.card-controls button {
+  flex: 1;
+  white-space: nowrap;
+  padding: 10px 6px;
+  font-size: 0.88rem;
+}
+
+/* ---- クイズタブ ---- */
+
+.session-score {
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-sub);
+}
+
+.quiz-question {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.quiz-label {
+  font-size: 0.85rem;
+  color: var(--text-sub);
+  margin-bottom: 8px;
+}
+
+.quiz-term {
+  font-size: 1.5rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.compare {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+}
+
+.compare-label {
+  font-size: 0.78rem;
+  color: var(--text-sub);
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.compare-value {
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.compare-value.expected {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.compare-value.example {
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  font-style: italic;
+}
+
+.match-badge {
+  align-self: flex-start;
+  background: #dcfce7;
+  color: var(--success);
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 5px 12px;
+  border-radius: 999px;
+}
+
+.judge-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.judge {
+  flex: 1;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 14px;
+}
+
+.judge.correct {
+  background: #f0fdf4;
+  border-color: #bbf7d0;
+  color: var(--success);
+}
+
+.judge.wrong {
+  background: #fef2f2;
+  border-color: #fecaca;
+  color: var(--danger);
+}
+
+/* ---- タブバー ---- */
+
+.tab-bar {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 640px;
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tab-button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  border: none;
+  border-radius: 0;
+  background: none;
+  padding: 10px 0 8px;
+  font-size: 0.72rem;
+  color: var(--text-sub);
+}
+
+.tab-button.active {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.tab-icon {
+  font-size: 1.3rem;
+}

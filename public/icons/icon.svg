@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="112" fill="#4f46e5"/>
+  <rect x="96" y="140" width="240" height="300" rx="24" fill="#ffffff" opacity="0.35" transform="rotate(-8 216 290)"/>
+  <rect x="150" y="120" width="250" height="310" rx="24" fill="#ffffff"/>
+  <text x="275" y="300" font-family="Helvetica, Arial, sans-serif" font-size="150" font-weight="bold" fill="#4f46e5" text-anchor="middle">Aあ</text>
+  <circle cx="400" cy="410" r="60" fill="#f59e0b"/>
+  <path d="M385 385 L385 435 L425 410 Z" fill="#ffffff"/>
+</svg>
