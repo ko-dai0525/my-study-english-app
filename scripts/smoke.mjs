@@ -52,6 +52,16 @@ await page.waitForSelector('text=クイズ成績: 1 / 1（100%）')
 await page.screenshot({ path: `${shots}/5-list-stats.png` })
 console.log('OK: 学習記録が一覧に反映')
 
+// アーカイブ → アーカイブ済みビューで確認 → 戻す
+await page.click('.word-item:has-text("improve") button:has-text("📦 アーカイブ")')
+await page.waitForSelector('button:has-text("学習中（1）")')
+await page.click('button:has-text("アーカイブ済み（1）")')
+await page.waitForSelector('.word-item:has-text("improve")')
+await page.screenshot({ path: `${shots}/6-archived.png` })
+await page.click('button:has-text("↩️ 戻す")')
+await page.waitForSelector('button:has-text("学習中（2）")')
+console.log('OK: アーカイブ→アーカイブ済み表示→戻す')
+
 // PWA: Service Worker 登録確認
 const swCount = await page.evaluate(async () => {
   const regs = await navigator.serviceWorker.getRegistrations()
