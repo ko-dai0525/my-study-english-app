@@ -9,12 +9,16 @@ interface Props {
   setWords: React.Dispatch<React.SetStateAction<WordEntry[]>>
 }
 
+const PAGE_SIZE = 10
+
 export function WordListTab({ words, setWords }: Props) {
   const [term, setTerm] = useState('')
   const [meaning, setMeaning] = useState('')
   const [example, setExample] = useState('')
   const [editingId, setEditingId] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [view, setView] = useState<'active' | 'archived'>('active')
+  const [page, setPage] = useState(1)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const resetForm = () => {
@@ -67,6 +71,16 @@ export function WordListTab({ words, setWords }: Props) {
     setWords((prev) => prev.filter((w) => w.id !== word.id))
   }
 
+  const toggleArchive = (word: WordEntry) => {
+    if (editingId === word.id) resetForm()
+    setWords((prev) =>
+      prev.map((w) =>
+        // 解除時は undefined にしてキー自体を JSON から消す
+        w.id === word.id ? { ...w, archived: !w.archived || undefined } : w,
+      ),
+    )
+  }
+
   const exportJson = () => {
     const blob = new Blob([JSON.stringify(words, null, 2)], {
       type: 'application/json',
@@ -98,13 +112,22 @@ export function WordListTab({ words, setWords }: Props) {
     }
   }
 
+  const activeCount = words.filter((w) => !w.archived).length
+  const archivedCount = words.length - activeCount
+  const inView = words.filter((w) =>
+    view === 'archived' ? w.archived : !w.archived,
+  )
   const q = query.trim().toLowerCase()
   const filtered = q
-    ? words.filter(
+    ? inView.filter(
         (w) =>
           w.term.toLowerCase().includes(q) || w.meaning.toLowerCase().includes(q),
       )
-    : words
+    : inView
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  // 削除・アーカイブで件数が減っても空ページに取り残されないようクランプ
+  const safePage = Math.min(page, totalPages)
+  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   return (
     <div className="stack">
@@ -156,20 +179,50 @@ export function WordListTab({ words, setWords }: Props) {
         <input
           type="search"
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value)
+            setPage(1)
+          }}
           placeholder="🔍 検索（英語・意味）"
         />
+      </div>
+
+      <div className="direction-toggle">
+        <button
+          type="button"
+          className={view === 'active' ? 'active' : ''}
+          onClick={() => {
+            setView('active')
+            setPage(1)
+          }}
+        >
+          学習中（{activeCount}）
+        </button>
+        <button
+          type="button"
+          className={view === 'archived' ? 'active' : ''}
+          onClick={() => {
+            setView('archived')
+            setPage(1)
+          }}
+        >
+          アーカイブ済み（{archivedCount}）
+        </button>
       </div>
 
       {filtered.length === 0 ? (
         <p className="empty">
           {words.length === 0
             ? 'まだ単語がありません。上のフォームから登録してみましょう！'
-            : '検索に一致する単語がありません。'}
+            : inView.length === 0
+              ? view === 'archived'
+                ? 'アーカイブ済みの単語はありません。'
+                : '学習中の単語はありません。'
+              : '検索に一致する単語がありません。'}
         </p>
       ) : (
         <ul className="word-list">
-          {filtered.map((word) => (
+          {pageItems.map((word) => (
             <li key={word.id} className="card word-item">
               <div className="word-main">
                 <div className="word-term-row">
@@ -198,6 +251,9 @@ export function WordListTab({ words, setWords }: Props) {
                 <button type="button" onClick={() => startEdit(word)}>
                   編集
                 </button>
+                <button type="button" onClick={() => toggleArchive(word)}>
+                  {word.archived ? '↩️ 戻す' : '📦 アーカイブ'}
+                </button>
                 <button
                   type="button"
                   className="danger"
@@ -209,6 +265,28 @@ export function WordListTab({ words, setWords }: Props) {
             </li>
           ))}
         </ul>
+      )}
+
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            type="button"
+            disabled={safePage === 1}
+            onClick={() => setPage(safePage - 1)}
+          >
+            ← 前へ
+          </button>
+          <span className="pagination-info">
+            {safePage} / {totalPages} ページ
+          </span>
+          <button
+            type="button"
+            disabled={safePage === totalPages}
+            onClick={() => setPage(safePage + 1)}
+          >
+            次へ →
+          </button>
+        </div>
       )}
 
       <div className="card data-section">

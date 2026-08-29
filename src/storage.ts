@@ -12,7 +12,8 @@ export function isWordEntry(value: unknown): value is WordEntry {
     (v.example === undefined || typeof v.example === 'string') &&
     typeof v.createdAt === 'number' &&
     typeof v.quizCount === 'number' &&
-    typeof v.correctCount === 'number'
+    typeof v.correctCount === 'number' &&
+    (v.archived === undefined || typeof v.archived === 'boolean')
   )
 }
 

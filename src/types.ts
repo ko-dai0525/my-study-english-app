@@ -6,6 +6,7 @@ export interface WordEntry {
   createdAt: number;
   quizCount: number;
   correctCount: number;
+  archived?: boolean;
 }
 
 export type Direction = 'enToJa' | 'jaToEn';

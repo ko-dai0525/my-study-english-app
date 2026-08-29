@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { WordEntry } from './types'
 import { loadWords, saveWords } from './storage'
 import { WordListTab } from './components/WordListTab'
@@ -16,6 +16,8 @@ const TABS: { id: Tab; icon: string; label: string }[] = [
 export default function App() {
   const [words, setWords] = useState<WordEntry[]>(loadWords)
   const [tab, setTab] = useState<Tab>('list')
+  // アーカイブ済みはカード・クイズの学習対象から外す
+  const activeWords = useMemo(() => words.filter((w) => !w.archived), [words])
 
   useEffect(() => {
     saveWords(words)
@@ -28,8 +30,8 @@ export default function App() {
       </header>
       <main className="app-main">
         {tab === 'list' && <WordListTab words={words} setWords={setWords} />}
-        {tab === 'card' && <CardTab words={words} />}
-        {tab === 'quiz' && <QuizTab words={words} setWords={setWords} />}
+        {tab === 'card' && <CardTab words={activeWords} />}
+        {tab === 'quiz' && <QuizTab words={activeWords} setWords={setWords} />}
       </main>
       <nav className="tab-bar">
         {TABS.map((t) => (
