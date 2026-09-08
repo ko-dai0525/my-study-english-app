@@ -1,21 +1,36 @@
-import { useState } from 'react'
-import type { Direction, WordEntry } from '../types'
-import { normalizeAnswer, shuffle } from '../utils'
+import { useEffect, useMemo, useState } from 'react'
+import type { Direction, QuizResult, WordEntry } from '../types'
+import { loadQuizSession, reconcileQueue, saveQuizSession } from '../session'
+import { makeId, normalizeAnswer } from '../utils'
 import { speakEnglish } from '../speech'
 import { DirectionToggle } from './DirectionToggle'
 
 interface Props {
   words: WordEntry[]
   setWords: React.Dispatch<React.SetStateAction<WordEntry[]>>
+  setResults: React.Dispatch<React.SetStateAction<QuizResult[]>>
 }
 
-export function QuizTab({ words, setWords }: Props) {
-  const [direction, setDirection] = useState<Direction>('enToJa')
-  const [queue, setQueue] = useState<WordEntry[]>(() => shuffle(words))
-  const [index, setIndex] = useState(0)
+export function QuizTab({ words, setWords, setResults }: Props) {
+  const [quiz, setQuiz] = useState(loadQuizSession)
+  // 入力中の回答は一時的なものなので永続化しない
   const [answer, setAnswer] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const [session, setSession] = useState({ asked: 0, correct: 0 })
+
+  const byId = useMemo(() => new Map(words.map((w) => [w.id, w])), [words])
+  // 保存された出題順を現在の単語に合わせた派生値を「正」とする。
+  // state が古いままでも描画は常に整合が取れる
+  const queueIds = useMemo(
+    () => reconcileQueue(quiz.queueIds, words),
+    [quiz.queueIds, words],
+  )
+  const index =
+    queueIds.length === 0 ? 0 : Math.min(quiz.index, queueIds.length - 1)
+
+  // App.tsx の saveWords と同じく、変更のたび localStorage へ保存
+  useEffect(() => {
+    saveQuizSession({ ...quiz, queueIds, index })
+  }, [quiz, queueIds, index])
 
   if (words.length === 0) {
     return (
@@ -25,7 +40,10 @@ export function QuizTab({ words, setWords }: Props) {
     )
   }
 
-  const current = queue[index]
+  const current = byId.get(queueIds[index])
+  if (!current) return null
+
+  const direction = quiz.direction
   const question = direction === 'enToJa' ? current.term : current.meaning
   const expected = direction === 'enToJa' ? current.meaning : current.term
   const matched =
@@ -34,7 +52,7 @@ export function QuizTab({ words, setWords }: Props) {
     normalizeAnswer(answer) === normalizeAnswer(expected)
 
   const changeDirection = (next: Direction) => {
-    setDirection(next)
+    setQuiz((prev) => ({ ...prev, direction: next }))
     setAnswer('')
     setSubmitted(false)
   }
@@ -56,26 +74,35 @@ export function QuizTab({ words, setWords }: Props) {
           : w,
       ),
     )
-    setSession((s) => ({
-      asked: s.asked + 1,
-      correct: s.correct + (correct ? 1 : 0),
+    setResults((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        wordId: current.id,
+        direction,
+        correct,
+        answeredAt: Date.now(),
+      },
+    ])
+    // 一巡し終えたら再シャッフルして先頭に戻る
+    const done = index + 1 >= queueIds.length
+    setQuiz((prev) => ({
+      ...prev,
+      queueIds: done ? reconcileQueue([], words) : queueIds,
+      index: done ? 0 : index + 1,
+      asked: prev.asked + 1,
+      correct: prev.correct + (correct ? 1 : 0),
     }))
     setAnswer('')
     setSubmitted(false)
-    if (index + 1 >= queue.length) {
-      setQueue(shuffle(words))
-      setIndex(0)
-    } else {
-      setIndex(index + 1)
-    }
   }
 
   return (
     <div className="stack">
       <DirectionToggle direction={direction} onChange={changeDirection} />
-      {session.asked > 0 && (
+      {quiz.asked > 0 && (
         <div className="session-score">
-          今回の成績: ⭕ {session.correct} / {session.asked}
+          今回の成績: ⭕ {quiz.correct} / {quiz.asked}
         </div>
       )}
       <div className="card quiz-question">

@@ -1,17 +1,30 @@
-import { useRef, useState } from 'react'
-import type { WordEntry } from '../types'
-import { isWordEntry } from '../storage'
+import { useMemo, useRef, useState } from 'react'
+import type { QuizResult, WordEntry } from '../types'
+import { isQuizResult, isWordEntry } from '../storage'
 import { speakEnglish } from '../speech'
 import { makeId } from '../utils'
 
 interface Props {
   words: WordEntry[]
   setWords: React.Dispatch<React.SetStateAction<WordEntry[]>>
+  results: QuizResult[]
+  setResults: React.Dispatch<React.SetStateAction<QuizResult[]>>
 }
 
 const PAGE_SIZE = 10
+// 単語カードに並べる直近の判定数
+const HISTORY_SIZE = 5
 
-export function WordListTab({ words, setWords }: Props) {
+const EXPORT_VERSION = 2
+
+function historyTitle(result: QuizResult): string {
+  const d = new Date(result.answeredAt)
+  const when = `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`
+  const dir = result.direction === 'enToJa' ? '英語→意味' : '意味→英語'
+  return `${when} ${dir} ${result.correct ? '正解' : '不正解'}`
+}
+
+export function WordListTab({ words, setWords, results, setResults }: Props) {
   const [term, setTerm] = useState('')
   const [meaning, setMeaning] = useState('')
   const [example, setExample] = useState('')
@@ -69,6 +82,8 @@ export function WordListTab({ words, setWords }: Props) {
     if (!window.confirm(`「${word.term}」を削除しますか？`)) return
     if (editingId === word.id) resetForm()
     setWords((prev) => prev.filter((w) => w.id !== word.id))
+    // 孤児レコードを残さない（アーカイブでは履歴を保持する）
+    setResults((prev) => prev.filter((r) => r.wordId !== word.id))
   }
 
   const toggleArchive = (word: WordEntry) => {
@@ -82,7 +97,13 @@ export function WordListTab({ words, setWords }: Props) {
   }
 
   const exportJson = () => {
-    const blob = new Blob([JSON.stringify(words, null, 2)], {
+    const payload = {
+      version: EXPORT_VERSION,
+      exportedAt: Date.now(),
+      words,
+      history: results,
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: 'application/json',
     })
     const url = URL.createObjectURL(blob)
@@ -96,21 +117,53 @@ export function WordListTab({ words, setWords }: Props) {
   const importJson = async (file: File) => {
     try {
       const data: unknown = JSON.parse(await file.text())
-      if (!Array.isArray(data)) throw new Error('not an array')
-      const entries = data.filter(isWordEntry)
+      // 配列なら v1（単語のみ）、オブジェクトなら v2（単語＋履歴）
+      const rawWords: unknown = Array.isArray(data)
+        ? data
+        : (data as Record<string, unknown> | null)?.words
+      const rawHistory: unknown = Array.isArray(data)
+        ? []
+        : (data as Record<string, unknown> | null)?.history
+      if (!Array.isArray(rawWords)) throw new Error('no words')
+      const entries = rawWords.filter(isWordEntry)
       if (entries.length === 0) throw new Error('no entries')
+      const history = Array.isArray(rawHistory)
+        ? rawHistory.filter(isQuizResult)
+        : []
       setWords((prev) => {
         const map = new Map(prev.map((w) => [w.id, w]))
         for (const entry of entries) map.set(entry.id, entry)
         return [...map.values()].sort((a, b) => b.createdAt - a.createdAt)
       })
-      window.alert(`${entries.length}件の単語を読み込みました✨`)
+      if (history.length > 0) {
+        setResults((prev) => {
+          const map = new Map(prev.map((r) => [r.id, r]))
+          for (const result of history) map.set(result.id, result)
+          return [...map.values()].sort((a, b) => a.answeredAt - b.answeredAt)
+        })
+      }
+      window.alert(
+        history.length > 0
+          ? `${entries.length}件の単語と${history.length}件の履歴を読み込みました✨`
+          : `${entries.length}件の単語を読み込みました✨`,
+      )
     } catch {
       window.alert(
         'ファイルを読み込めませんでした。エクスポートしたJSONファイルを選択してください。',
       )
     }
   }
+
+  // 単語ごとの判定履歴（古い順）
+  const historyByWord = useMemo(() => {
+    const map = new Map<string, QuizResult[]>()
+    for (const r of [...results].sort((a, b) => a.answeredAt - b.answeredAt)) {
+      const list = map.get(r.wordId)
+      if (list) list.push(r)
+      else map.set(r.wordId, [r])
+    }
+    return map
+  }, [results])
 
   const activeCount = words.filter((w) => !w.archived).length
   const archivedCount = words.length - activeCount
@@ -246,6 +299,24 @@ export function WordListTab({ words, setWords }: Props) {
                     {Math.round((word.correctCount / word.quizCount) * 100)}%）
                   </div>
                 )}
+                {(() => {
+                  const history = historyByWord.get(word.id)
+                  if (!history || history.length === 0) return null
+                  return (
+                    <div className="word-history">
+                      履歴:{' '}
+                      {history.slice(-HISTORY_SIZE).map((r) => (
+                        <span
+                          key={r.id}
+                          className="history-mark"
+                          title={historyTitle(r)}
+                        >
+                          {r.correct ? '⭕' : '❌'}
+                        </span>
+                      ))}
+                    </div>
+                  )
+                })()}
               </div>
               <div className="word-actions">
                 <button type="button" onClick={() => startEdit(word)}>

@@ -1,14 +1,27 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { Direction, WordEntry } from '../types'
-import { shuffle } from '../utils'
+import { loadCardSession, reconcileQueue, saveCardSession } from '../session'
 import { speakEnglish } from '../speech'
 import { DirectionToggle } from './DirectionToggle'
 
 export function CardTab({ words }: { words: WordEntry[] }) {
-  const [direction, setDirection] = useState<Direction>('enToJa')
-  const [deck, setDeck] = useState<WordEntry[]>(() => shuffle(words))
-  const [index, setIndex] = useState(0)
+  const [card, setCard] = useState(loadCardSession)
+  // めくった状態は一時的な見た目なので永続化しない（戻ったら表から）
   const [flipped, setFlipped] = useState(false)
+
+  const byId = useMemo(() => new Map(words.map((w) => [w.id, w])), [words])
+  // 保存された並びを現在の単語に合わせた派生値を「正」とする。
+  // state が古いままでも描画は常に整合が取れる
+  const deckIds = useMemo(
+    () => reconcileQueue(card.deckIds, words),
+    [card.deckIds, words],
+  )
+  const index = deckIds.length === 0 ? 0 : Math.min(card.index, deckIds.length - 1)
+
+  // App.tsx の saveWords と同じく、変更のたび localStorage へ保存
+  useEffect(() => {
+    saveCardSession({ ...card, deckIds, index })
+  }, [card, deckIds, index])
 
   if (words.length === 0) {
     return (
@@ -18,19 +31,24 @@ export function CardTab({ words }: { words: WordEntry[] }) {
     )
   }
 
-  const card = deck[index]
-  const front = direction === 'enToJa' ? card.term : card.meaning
-  const back = direction === 'enToJa' ? card.meaning : card.term
+  const current = byId.get(deckIds[index])
+  if (!current) return null
+
+  const direction = card.direction
+  const front = direction === 'enToJa' ? current.term : current.meaning
+  const back = direction === 'enToJa' ? current.meaning : current.term
 
   const move = (delta: number) => {
     setFlipped(false)
-    setIndex((prev) => (prev + delta + deck.length) % deck.length)
+    setCard((prev) => ({
+      ...prev,
+      index: (index + delta + deckIds.length) % deckIds.length,
+    }))
   }
 
   const reshuffle = () => {
-    setDeck(shuffle(words))
-    setIndex(0)
     setFlipped(false)
+    setCard((prev) => ({ ...prev, deckIds: reconcileQueue([], words), index: 0 }))
   }
 
   const speakButton = (text: string) => (
@@ -49,9 +67,14 @@ export function CardTab({ words }: { words: WordEntry[] }) {
 
   return (
     <div className="stack">
-      <DirectionToggle direction={direction} onChange={setDirection} />
+      <DirectionToggle
+        direction={direction}
+        onChange={(next: Direction) =>
+          setCard((prev) => ({ ...prev, direction: next }))
+        }
+      />
       <div className="card-progress">
-        {index + 1} / {deck.length}
+        {index + 1} / {deckIds.length}
       </div>
       <button
         type="button"
@@ -62,13 +85,15 @@ export function CardTab({ words }: { words: WordEntry[] }) {
         <div className="flip-card-inner">
           <div className="flip-face front">
             <span className="flip-text">{front}</span>
-            {direction === 'enToJa' && speakButton(card.term)}
+            {direction === 'enToJa' && speakButton(current.term)}
             <span className="flip-hint">タップでめくる</span>
           </div>
           <div className="flip-face back">
             <span className="flip-text">{back}</span>
-            {direction === 'jaToEn' && speakButton(card.term)}
-            {card.example && <span className="flip-example">{card.example}</span>}
+            {direction === 'jaToEn' && speakButton(current.term)}
+            {current.example && (
+              <span className="flip-example">{current.example}</span>
+            )}
           </div>
         </div>
       </button>

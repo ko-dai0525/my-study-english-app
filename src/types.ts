@@ -10,3 +10,12 @@ export interface WordEntry {
 }
 
 export type Direction = 'enToJa' | 'jaToEn';
+
+// クイズの自己判定 1 回分の記録
+export interface QuizResult {
+  id: string;
+  wordId: string;
+  direction: Direction;
+  correct: boolean;
+  answeredAt: number;
+}
