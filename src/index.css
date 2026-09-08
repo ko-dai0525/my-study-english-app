@@ -235,6 +235,17 @@ label {
   color: var(--text-sub);
 }
 
+.word-history {
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--text-sub);
+}
+
+.history-mark {
+  margin-left: 2px;
+  font-size: 0.9rem;
+}
+
 .word-actions {
   display: flex;
   flex-direction: column;

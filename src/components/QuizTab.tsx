@@ -1,16 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import type { Direction, WordEntry } from '../types'
+import type { Direction, QuizResult, WordEntry } from '../types'
 import { loadQuizSession, reconcileQueue, saveQuizSession } from '../session'
-import { normalizeAnswer } from '../utils'
+import { makeId, normalizeAnswer } from '../utils'
 import { speakEnglish } from '../speech'
 import { DirectionToggle } from './DirectionToggle'
 
 interface Props {
   words: WordEntry[]
   setWords: React.Dispatch<React.SetStateAction<WordEntry[]>>
+  setResults: React.Dispatch<React.SetStateAction<QuizResult[]>>
 }
 
-export function QuizTab({ words, setWords }: Props) {
+export function QuizTab({ words, setWords, setResults }: Props) {
   const [quiz, setQuiz] = useState(loadQuizSession)
   // 入力中の回答は一時的なものなので永続化しない
   const [answer, setAnswer] = useState('')
@@ -73,6 +74,16 @@ export function QuizTab({ words, setWords }: Props) {
           : w,
       ),
     )
+    setResults((prev) => [
+      ...prev,
+      {
+        id: makeId(),
+        wordId: current.id,
+        direction,
+        correct,
+        answeredAt: Date.now(),
+      },
+    ])
     // 一巡し終えたら再シャッフルして先頭に戻る
     const done = index + 1 >= queueIds.length
     setQuiz((prev) => ({
