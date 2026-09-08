@@ -1,6 +1,9 @@
-import type { WordEntry } from './types'
+import type { Direction, WordEntry } from './types'
 
 const STORAGE_KEY = 'my-study-english-app/words/v1'
+export function isDirection(value: unknown): value is Direction {
+  return value === 'enToJa' || value === 'jaToEn'
+}
 
 export function isWordEntry(value: unknown): value is WordEntry {
   if (typeof value !== 'object' || value === null) return false
