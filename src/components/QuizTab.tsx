@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Direction, QuizResult, WordEntry } from '../types'
 import { loadQuizSession, reconcileQueue, saveQuizSession } from '../session'
-import { makeId, normalizeAnswer } from '../utils'
+import { makeId, maskTerm, normalizeAnswer } from '../utils'
 import { speakEnglish } from '../speech'
 import { DirectionToggle } from './DirectionToggle'
 
@@ -46,6 +46,14 @@ export function QuizTab({ words, setWords, setResults }: Props) {
   const direction = quiz.direction
   const question = direction === 'enToJa' ? current.term : current.meaning
   const expected = direction === 'enToJa' ? current.meaning : current.term
+  // 回答前に出すヒント。日→英では例文に答えの英語が入っているので伏せ字にし、
+  // 伏せきれなければ例文ごと出さない
+  const example = current.example?.trim()
+  const hint = !example
+    ? null
+    : direction === 'enToJa'
+      ? { text: example, masked: false }
+      : maskHint(example, current.term)
   const matched =
     submitted &&
     normalizeAnswer(answer) !== '' &&
@@ -122,6 +130,23 @@ export function QuizTab({ words, setWords, setResults }: Props) {
             </button>
           )}
         </div>
+        {/* 回答後は答え合わせ欄に例文を全文で出すので、こちらは畳む */}
+        {!submitted && hint && (
+          <div className="quiz-example">
+            {hint.text}
+            {/* 伏せ字のときは読み上げると答えが聞こえてしまうので出さない */}
+            {!hint.masked && (
+              <button
+                type="button"
+                className="icon-button"
+                onClick={() => speakEnglish(hint.text)}
+                aria-label="例文の発音を聞く"
+              >
+                🔊
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {!submitted ? (
@@ -161,10 +186,20 @@ export function QuizTab({ words, setWords, setResults }: Props) {
                 {answer.trim() || '（未入力）'}
               </div>
             </div>
-            {current.example && (
+            {example && (
               <div className="compare-row">
                 <div className="compare-label">例文</div>
-                <div className="compare-value example">{current.example}</div>
+                <div className="compare-value example">
+                  {example}
+                  <button
+                    type="button"
+                    className="icon-button"
+                    onClick={() => speakEnglish(example)}
+                    aria-label="例文の発音を聞く"
+                  >
+                    🔊
+                  </button>
+                </div>
               </div>
             )}
             {matched && <div className="match-badge">✨ 一致！</div>}
@@ -190,4 +225,10 @@ export function QuizTab({ words, setWords, setResults }: Props) {
       )}
     </div>
   )
+}
+
+// 例文の対象語を伏せた結果をヒントの形にして返す（伏せられなければ null）
+function maskHint(example: string, term: string) {
+  const masked = maskTerm(example, term)
+  return masked === null ? null : { text: masked, masked: true }
 }

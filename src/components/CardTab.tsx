@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { Direction, WordEntry } from '../types'
 import { loadCardSession, reconcileQueue, saveCardSession } from '../session'
+import { maskTerm } from '../utils'
 import { speakEnglish } from '../speech'
 import { DirectionToggle } from './DirectionToggle'
 
@@ -37,6 +38,14 @@ export function CardTab({ words }: { words: WordEntry[] }) {
   const direction = card.direction
   const front = direction === 'enToJa' ? current.term : current.meaning
   const back = direction === 'enToJa' ? current.meaning : current.term
+  // 表面はまだ答えを見せていないので、日→英では例文の対象語を伏せる。
+  // 伏せきれなければ表面には出さない（裏面では答えが出ているので原文のまま）
+  const example = current.example?.trim()
+  const frontExample = !example
+    ? null
+    : direction === 'enToJa'
+      ? example
+      : maskTerm(example, current.term)
 
   const move = (delta: number) => {
     setFlipped(false)
@@ -51,7 +60,7 @@ export function CardTab({ words }: { words: WordEntry[] }) {
     setCard((prev) => ({ ...prev, deckIds: reconcileQueue([], words), index: 0 }))
   }
 
-  const speakButton = (text: string) => (
+  const speakButton = (text: string, label = '発音を聞く') => (
     <button
       type="button"
       className="icon-button speak-button"
@@ -59,7 +68,7 @@ export function CardTab({ words }: { words: WordEntry[] }) {
         e.stopPropagation()
         speakEnglish(text)
       }}
-      aria-label="発音を聞く"
+      aria-label={label}
     >
       🔊
     </button>
@@ -86,13 +95,24 @@ export function CardTab({ words }: { words: WordEntry[] }) {
           <div className="flip-face front">
             <span className="flip-text">{front}</span>
             {direction === 'enToJa' && speakButton(current.term)}
+            {example && frontExample && (
+              <span className="flip-example">
+                {frontExample}
+                {/* 伏せ字のときは読み上げると答えが聞こえるので出さない */}
+                {direction === 'enToJa' &&
+                  speakButton(example, '例文の発音を聞く')}
+              </span>
+            )}
             <span className="flip-hint">タップでめくる</span>
           </div>
           <div className="flip-face back">
             <span className="flip-text">{back}</span>
             {direction === 'jaToEn' && speakButton(current.term)}
-            {current.example && (
-              <span className="flip-example">{current.example}</span>
+            {example && (
+              <span className="flip-example">
+                {example}
+                {speakButton(example, '例文の発音を聞く')}
+              </span>
             )}
           </div>
         </div>
