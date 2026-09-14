@@ -363,6 +363,10 @@ label {
   overflow-wrap: anywhere;
 }
 
+.flip-face.front {
+  padding-bottom: 40px;
+}
+
 .flip-hint {
   position: absolute;
   bottom: 14px;
@@ -375,10 +379,20 @@ label {
   opacity: 0.9;
   font-style: italic;
   text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* 裏面（濃色背景）の白文字を継承しているので、白背景の表面だけ色を落とす */
+.flip-face.front .flip-example {
+  color: var(--text-sub);
 }
 
 .flip-face .speak-button {
   font-size: 1.6rem;
+}
+
+.flip-example .speak-button {
+  font-size: 1rem;
 }
 
 .card-controls {
@@ -415,6 +429,16 @@ label {
 .quiz-term {
   font-size: 1.5rem;
   font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.quiz-example {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border);
+  font-size: 0.9rem;
+  color: var(--text-sub);
+  font-style: italic;
   overflow-wrap: anywhere;
 }
 
