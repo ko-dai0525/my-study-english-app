@@ -121,6 +121,58 @@ await page.click('button:has-text("↩️ 戻す")')
 await page.waitForSelector('button:has-text("学習中（2）")')
 console.log('OK: アーカイブ→アーカイブ済み表示→戻す')
 
+// 出題時の例文ヒント（Issue #5）
+// 出題順はシャッフルなので、出題対象を1件に絞って決定的に検証する
+// （直前のシナリオがアーカイブ済みビューのままなので学習中に戻す）
+await page.click('button:has-text("学習中（2）")')
+await page.click('.word-item:has-text("improve") button:has-text("📦 アーカイブ")')
+await page.waitForSelector('button:has-text("学習中（1）")')
+
+// 英語 → 意味: 回答前に例文がそのまま出る
+await page.click('.tab-button:has-text("クイズ")')
+await page.waitForSelector('.quiz-example')
+assert(
+  (await page.textContent('.quiz-example'))?.includes('seeing you'),
+  '英語 → 意味では回答前に例文がそのまま出る',
+)
+
+// 意味 → 英語: 対象語が伏せ字になり、答えの英語が画面に出ない
+await page.click('button:has-text("意味 → 英語")')
+await page.waitForSelector('.quiz-example')
+const maskedHint = (await page.textContent('.quiz-example')) ?? ''
+assert(
+  maskedHint.includes('____') && !/look|forward/i.test(maskedHint),
+  `意味 → 英語では例文の対象語が伏せ字（${maskedHint.trim()}）`,
+)
+await page.screenshot({ path: `${shots}/8-quiz-example-masked.png` })
+await page.click('button:has-text("英語 → 意味")')
+
+// カードの表面にも例文が出る
+await page.click('.tab-button:has-text("カード")')
+await page.waitForSelector('.flip-card')
+assert(
+  (await page.textContent('.flip-face.front .flip-example'))?.includes('seeing you'),
+  'カードの表面に例文が出る',
+)
+await page.screenshot({ path: `${shots}/9-card-front-example.png` })
+
+// 例文のない単語（improve）だけにすると例文の行は出ない
+await page.click('.tab-button:has-text("一覧")')
+await page.waitForSelector('.word-list')
+await page.click('button:has-text("アーカイブ済み（1）")')
+await page.click('.word-item:has-text("improve") button:has-text("↩️ 戻す")')
+await page.waitForSelector('button:has-text("学習中（2）")')
+await page.click('button:has-text("学習中（2）")')
+await page.click('.word-item:has-text("look forward to") button:has-text("📦 アーカイブ")')
+await page.waitForSelector('button:has-text("学習中（1）")')
+await page.click('.tab-button:has-text("クイズ")')
+await page.waitForSelector('.quiz-term')
+assert(
+  (await page.locator('.quiz-example').count()) === 0,
+  '例文のない単語では例文を出さない',
+)
+console.log('OK: 出題時の例文ヒント（そのまま表示・伏せ字・例文なし・カード表面）')
+
 // PWA: Service Worker 登録確認
 const swCount = await page.evaluate(async () => {
   const regs = await navigator.serviceWorker.getRegistrations()
